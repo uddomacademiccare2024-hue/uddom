@@ -1246,7 +1246,7 @@ const stPaid=u=>S.pays.filter(p=>p.uid===u.id&&p.kind==='কোচিং ফি'
 let SFC=null;
 const sumBox=St=>{let p=0,g=0,o=0;St.forEach(u=>{const f=stuFee(u);p+=f;g+=Math.min(stPaid(u),f);o+=oldDue(u)});return `<div class="stats"><div class="stat"><small>মোট শিক্ষার্থী</small><b>${bn(St.length)}</b></div><div class="stat"><small>মোট প্রদেয়</small><b>৳${bn(p)}</b></div><div class="stat ok"><small>এই মাসে জমা</small><b>৳${bn(g)}</b></div><div class="stat bad"><small>মোট বকেয়া (আগের সহ)</small><b>৳${bn(p-g+o)}</b></div></div>`};
 function vSd(){const A=S.users.filter(u=>u.cat==='std');if(EH){const e=S.users.find(u=>u.id===EH);if(e&&e.cls)SFC=e.cls}
- const St=SFC?A.filter(u=>u.cls===SFC).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})):[];
+ const St=SFC?A.filter(u=>u.cls===SFC).sort((a,b)=>{const T=u=>{const c=Math.max(0,stuFee(u)-stPaid(u))>0,o=oldDue(u)>0;return c&&o?0:o?1:c?2:3};return T(a)-T(b)||a.id.localeCompare(b.id,undefined,{numeric:true})}):[];
  const tbl=`<div class="tw vs"><table><tr><th>আইডি</th><th>নাম</th><th>শ্রেণী</th><th>নির্ধারিত</th><th>ডিসকাউন্ট</th><th>প্রদেয়</th><th>বকেয়া</th><th>পূর্বের বকেয়া</th><th>পরীক্ষা ফি (বাকি)</th><th></th></tr>${St.map(u=>{const i=S.users.indexOf(u);return`<tr id="sr_${u.id}" ${EH===u.id?'style="background:#ffd54a66"':''}><td class="id">${u.id}</td><td>${esc(u.name)}</td><td>${esc(u.cls)}</td><td>৳${bn(S.fees[u.cls])}</td><td><input style="width:80px" type="number" value="${vShow('disc|'+u.id,u.disc||0)}" onchange="discChg(${i},this.value)">${vTag('disc|'+u.id)}</td><td><b>৳${bn(stuFee(u))}</b></td><td style="color:var(--red)"><b>৳${bn(stPaid(u)>0?Math.max(0,stuFee(u)-stPaid(u)):0)}</b></td><td style="color:var(--red)"><b>৳${bn(oldDue(u))}</b></td><td style="white-space:normal">${(()=>{const L=exPend(u.id);return L.length?esc(L.map(e=>e.title).join(', '))+'<br><b style="color:var(--red)">৳'+bn(L.reduce((a,e)=>a+exRem(e),0))+'</b>':'—'})()}</td><td>${(()=>{const f=stuFee(u),pd=stPaid(u);return f>0&&pd>=f?`<button class="b g sm" disabled style="opacity:.65;cursor:not-allowed">✓ ${curMon()} এর ফি পরিশোধিত</button>`:`<button class="b sm" onclick="sfPay('${u.id}')">${pd>0?'বকেয়া ফি জমা নিন':'ফি জমা নিন'}</button>`})()}<br><button class="b g sm" style="margin-top:4px" onclick="stMon('${u.id}')">📅 মাসভিত্তিক ফি</button>${lvl('rs')>=3?`<button class="b g sm" style="margin-top:4px" onclick="foWin('${u.id}')">🔄 ফি পুনঃনির্ধারণ</button>`:''}${exPend(u.id).length?`<button class="b sm" style="margin-top:4px" onclick="exPayWin('${u.id}')">📝 পরীক্ষা ফি জমা</button>`:''}</td></tr>`}).join('')}</table></div>${sumBox(St)}`;
  $('#mn').innerHTML=`<div class="card"><h3>কোচিং ফি</h3><label>শ্রেণী বাছাই করুন</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px">${S.classes.map((c,i)=>`<button class="b ${c===SFC?'':'g'} sm" onclick="SFC=S.classes[${i}];EH=null;vSd()">${esc(c)} (${bn(A.filter(u=>u.cls===c).length)})</button>`).join('')}</div>${!SFC?'<small>কোচিং ফির তথ্য দেখতে একটি শ্রেণী বাছাই করুন।</small>':`<div class="fo-row"><div class="f" style="flex:1 1 200px;max-width:260px;margin:0"><div><label>${esc(SFC)} — মাসিক ফি (টাকা)</label><input type="number" min="0" value="${vShow('fee|'+SFC,S.fees[SFC]||0)}" onchange="feeChg(SFC,this.value)">${vTag('fee|'+SFC)}<small style="color:var(--mu);display:block"></small></div></div>${lvl('rs')>=3?`<button class="b fo-cb" onclick="foCWin(S.classes.indexOf(SFC))">🏫 শ্রেণীর ফি পুনঃনির্ধারণ${((S.cfo||{})[SFC]||[]).length?' ('+bn(((S.cfo||{})[SFC]||[]).length)+')':''}</button>`:''}</div>${St.length?tbl:'<small>এই শ্রেণীতে কোনো শিক্ষার্থী নেই।</small>'}`}</div>`+'<div class="card"><h3 style="margin:0 0 8px">📝 শ্রেণী/গ্রুপ ভিত্তিক পরীক্ষা ফি নির্ধারণ</h3><div class="rw rr" style="margin-bottom:8px"><button class="b sm" onclick="exfWin()">➕ পরীক্ষা ফি নির্ধারণ</button></div><small style="color:var(--mu)">কোন শ্রেণী/গ্রুপে কোন পরীক্ষা বাবদ কত নেওয়া হয়েছে তা শুধু সেই শ্রেণী/গ্রুপের নিচেই দেখাবে। এখানে শুধু ফি নির্ধারণ হয়, স্লিপ তৈরি হয় না। নির্ধারিত ফি শিক্ষার্থীর কোচিং ফির পাশে বাকি হিসেবে দেখায়; শিক্ষার্থী কোচিং ফির সাথে একসাথে বা আলাদা তারিখে জমা দিলে তখনই স্লিপ তৈরি হয় ও আয়ে যুক্ত হয়।</small><div id="exb"></div></div>'+slipBlock('স্টুডেন্টের পেমেন্ট স্লিপ',false);exfBlk()}
 
@@ -1389,42 +1389,72 @@ render();
 </script><script>(function(){const v=window.visualViewport,r=document.documentElement;function u(){if(v){r.style.setProperty('--vvh',v.height+'px');r.style.setProperty('--vvt',v.offsetTop+'px')}}
 if(v){v.addEventListener('resize',()=>{u();fx()});v.addEventListener('scroll',u);u()}
 function fx(){const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){try{a.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}}}
-document.addEventListener('focusin',e=>{if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)){setTimeout(fx,300);setTimeout(fx,700)}});})();</script><script>/* ===== ক্লাউড সিঙ্ক (Google Apps Script + Drive) ===== */
+document.addEventListener('focusin',e=>{if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)){setTimeout(fx,300);setTimeout(fx,700)}});})();</script><script>/* ===== ক্লাউড সিঙ্ক (Google Apps Script + Drive) — একসাথে একাধিক ডিভাইসের পরিবর্তন স্বয়ংক্রিয়ভাবে মিলিয়ে (merge) নেয় ===== */
 (function(){
-const CLOUD_URL='https://script.google.com/macros/s/AKfycbwjTVro0HP5RPHfMD--YDLNjb68IeREUXRpgTupUMQMJ-KaS7m_ca7KO-ORcHQkgIw/exec';   /* ← এখানে Apps Script Web App URL বসান (https://script.google.com/macros/s/.../exec) */
-const CLOUD_KEY='Udyam2024xO9mAq7Sw3MAr';   /* ← Code.gs-এর KEY-এর সাথে হুবহু মিলিয়ে একই গোপন কী বসান */
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbwjTVro0HP5RPHfMD--YDLNjb68IeREUXRpgTupUMQMJ-KaS7m_ca7KO-ORcHQkgIw/exec';   /* Apps Script Web App URL */
+const CLOUD_KEY='Udyam2024xO9mAq7Sw3MAr';   /* Code.gs-এর KEY-এর সাথে হুবহু এক */
 if(!CLOUD_URL)return;
 const LS=localStorage;let ver=+LS.getItem('udyam-ver')||0,dirty=LS.getItem('udyam-dirty')==='1',busy=0,ready=0,tm=0,need=0;
 const bd=document.createElement('div');bd.id='cld';document.body.appendChild(bd);
 const st=document.createElement('style');st.textContent='#cld{position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:8;font-size:11px;padding:3px 9px;border-radius:99px;background:#0008;color:#fff;pointer-events:none}@media print{#cld{display:none!important}}';document.head.appendChild(st);
 const B=(t)=>{bd.textContent=t};B('⏳ সিঙ্ক হচ্ছে…');
+/* ---- ৩-পক্ষীয় মার্জ: base (শেষ সিঙ্ক), local (এই ডিভাইস), server ---- */
+const isO=x=>x&&typeof x==='object'&&!Array.isArray(x),eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const kf=x=>isO(x)?(x.id!==undefined?'i'+x.id:x.no!==undefined?'n'+x.no:null):null;
+const keyed=a=>a.every(x=>kf(x)!==null)&&new Set(a.map(kf)).size===a.length;
+function mg(b,l,s){
+  if(eq(l,b))return s;if(eq(s,b))return l;if(eq(l,s))return l;
+  if(isO(l)&&isO(s)){const bb=isO(b)?b:{},r={};
+    new Set([...Object.keys(l),...Object.keys(s),...Object.keys(bb)]).forEach(k=>{const iB=k in bb,iL=k in l,iS=k in s;
+      if(!iL&&!iS)return;
+      if(!iL){if(iB&&eq(s[k],bb[k]))return;r[k]=s[k];return}
+      if(!iS){if(iB&&eq(l[k],bb[k]))return;r[k]=l[k];return}
+      r[k]=mg(bb[k],l[k],s[k])});
+    return r}
+  if(Array.isArray(l)&&Array.isArray(s)){const bb=Array.isArray(b)?b:[];
+    if(keyed(l)&&keyed(s)&&keyed(bb)){
+      const bm=new Map(bb.map(x=>[kf(x),x])),lm=new Map(l.map(x=>[kf(x),x])),out=[],done=new Set();
+      s.forEach(x=>{const k=kf(x);done.add(k);
+        if(!lm.has(k)){if(bm.has(k)&&eq(x,bm.get(k)))return;out.push(x);return}
+        out.push(mg(bm.get(k),lm.get(k),x))});
+      l.forEach(x=>{const k=kf(x);if(done.has(k))return;if(bm.has(k)&&eq(x,bm.get(k)))return;out.push(x)});
+      return out}
+    if(bb.length&&eq(l.slice(0,bb.length),bb)&&eq(s.slice(0,bb.length),bb)){
+      const seen=new Set(s.slice(bb.length).map(x=>JSON.stringify(x)));
+      return s.concat(l.slice(bb.length).filter(x=>!seen.has(JSON.stringify(x))))}}
+  return l}
 async function api(post,body){
   const u=CLOUD_URL+'?key='+encodeURIComponent(CLOUD_KEY)+(post?'':'&_='+Date.now()+(body||''));
   const r=await fetch(u,post?{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:CLOUD_KEY},post))}:{});
   const j=await r.json();if(!j.ok&&j.err==='auth')throw new Error('auth');return j}
 function setDirty(v){dirty=v;LS.setItem('udyam-dirty',v?'1':'0')}
-function apply(r){LS.setItem('udyam1',r.data);ver=r.ver;LS.setItem('udyam-ver',ver);setDirty(0);S=load();Object.assign(CAT,S.cats);need=1;ui()}
-function ui(){if(!need)return;if(document.querySelector('.md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||''))return;need=0;if(me){me=S.users.find(u=>u.id===me.id)||null}render()}
+function setBase(t){try{LS.setItem('udyam-base',t)}catch(e){}}
+function swap(){S=load();Object.assign(CAT,S.cats);if(me&&!me.cc){const m=S.users.find(u=>u.id===me.id);if(m)me=m}need=1;ui()}
+function apply(r){LS.setItem('udyam1',r.data);setBase(r.data);ver=r.ver;LS.setItem('udyam-ver',ver);setDirty(0);swap()}
+function mergeIn(g){let b=null;try{b=JSON.parse(LS.getItem('udyam-base')||'null')}catch(e){}
+  const l=JSON.parse(LS.getItem('udyam1')),s=JSON.parse(g.data),m=mg(b||{},l,s);
+  LS.setItem('udyam1',JSON.stringify(m));setBase(g.data);ver=g.ver;LS.setItem('udyam-ver',ver);setDirty(1);swap()}
+function ui(){if(!need)return;if(document.querySelector('.md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||''))return;need=0;if(me&&!me.cc){me=S.users.find(u=>u.id===me.id)||null}render()}
 async function pull(initial){
   try{const r=await api(0);
     if(r.empty){if(initial)await push(1);else B('☁️ সিঙ্ক হয়েছে');return}
     if(r.ver>ver||initial&&r.ver!==ver){
-      if(dirty&&initial&&!confirm('এই ডিভাইসে সার্ভারে-না-যাওয়া পরিবর্তন আছে।\nOK = সার্ভারের ডাটা নিন (এই ডিভাইসের পরিবর্তন বাদ)\nCancel = এই ডিভাইসের ডাটা সার্ভারে পাঠান')){await push(1);return}
-      apply(r)}
+      if(dirty){mergeIn(r);await push(0)}else apply(r)}
     B('☁️ সিঙ্ক হয়েছে')}catch(e){B(e.message==='auth'?'⚠️ কী ভুল':'⚠️ অফলাইন')}}
-async function push(force){
-  if(busy)return;busy=1;const snap=LS.getItem('udyam1');
+async function push(force,n){
+  if(busy)return;n=n||0;busy=1;const snap=LS.getItem('udyam1');
   try{B('⏳ সেভ হচ্ছে…');const r=await api({base:ver,force:force?1:0,data:snap});
-    if(r.ok){ver=r.ver;LS.setItem('udyam-ver',ver);if(LS.getItem('udyam1')===snap){setDirty(0);B('☁️ সিঙ্ক হয়েছে')}else{sched()}}
-    else if(r.err==='stale'){const g=await api(0);busy=0;alert('অন্য ডিভাইস থেকে নতুন পরিবর্তন এসেছে। সর্বশেষ ডাটা লোড হলো — আপনার শেষ পরিবর্তনটি থাকলে আবার দিন।');apply(g);B('☁️ সিঙ্ক হয়েছে')}
+    if(r.ok){ver=r.ver;LS.setItem('udyam-ver',ver);setBase(snap);if(LS.getItem('udyam1')===snap){setDirty(0);B('☁️ সিঙ্ক হয়েছে')}else{sched()}}
+    else if(r.err==='stale'){const g=await api(0);mergeIn(g);busy=0;if(n<4){return push(0,n+1)}B('⚠️ সেভ ব্যর্থ');sched(15000)}
     else{B('⚠️ সেভ ব্যর্থ');sched(15000)}}
   catch(e){B(e.message==='auth'?'⚠️ কী ভুল':'⚠️ অফলাইন — আবার চেষ্টা হবে');sched(15000)}
   busy=0}
-function sched(ms){clearTimeout(tm);if(ready)tm=setTimeout(()=>{if(dirty)push(0)},ms||1500)}
+function sched(ms){clearTimeout(tm);if(ready)tm=setTimeout(()=>{if(dirty)push(0)},ms||1200)}
 const _s=save;save=function(){const r=_s.apply(this,arguments);setDirty(1);B('⏳ সেভ হবে…');sched();return r};
 async function poll(){if(!ready||busy||dirty){ui();return}try{const r=await api(0,'&v=1');if(r.ver>ver)await pull(0);else ui()}catch(e){}}
 setInterval(poll,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
 addEventListener('online',()=>{if(dirty)push(0);else poll()});
+addEventListener('pagehide',()=>{if(dirty){try{navigator.sendBeacon&&0}catch(e){}}});
 (async()=>{if(LS.getItem('udyam-force')==='1'){LS.removeItem('udyam-force');ready=1;await push(1)}else{await pull(1);ready=1}if(dirty)sched(500)})();
 })();</script><script>/* ===== লগইন সেশন: রিফ্রেশে লগআউট নয়; ৩০ মিনিট নিষ্ক্রিয় থাকলে অটো লগআউট ===== */
 (function(){
