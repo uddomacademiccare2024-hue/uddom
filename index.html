@@ -902,8 +902,15 @@ function expWin(ym,id){const e=id?EX().find(x=>x.id===id):null;closeM();const t=
  modal(`<h3>${e?'ব্যয় এডিট':'➕ নতুন ব্যয় যোগ'}</h3><label>ব্যয়ের খাত (তালিকা থেকে বাছুন বা নিজে লিখুন)</label><input id="ex1" list="exl" value="${esc(e?e.title:'')}" placeholder="যেমন: ঘর ভাড়া"><datalist id="exl">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist><div class="f" style="margin-top:6px"><div><label>টাকা</label><input id="ex2" type="number" min="1" value="${e?e.amt:''}"></div><div><label>তারিখ</label><input id="ex3" type="date" value="${d}"></div></div><label>নোট (ঐচ্ছিক)</label><input id="ex4" value="${esc(e?e.note||'':'')}"><div class="bar" style="margin-top:10px"><button class="b g" onclick="closeM();acctMon('${ym}')">বাতিল</button><button class="b" onclick="expSave('${ym}',${id||0})">সংরক্ষণ</button></div>`)}
 function expSave(ym,id){const title=$('#ex1').value.trim(),amt=+$('#ex2').value,date=$('#ex3').value,note=$('#ex4').value.trim();
  if(!title||!(amt>0)||!date){alert('ব্যয়ের খাত, টাকার পরিমাণ ও তারিখ দিন।');return}
+ const isNew=!id;
  if(id){const e=EX().find(x=>x.id===id);Object.assign(e,{title,amt,date,note,ym:date.slice(0,7)})}else EX().push({id:Date.now(),title,amt,date,note,ym:date.slice(0,7)});
- save();closeM();acctMon(date.slice(0,7));okPop(id?'ব্যয় আপডেট হয়েছে ✨':'ব্যয় সফলভাবে সংরক্ষিত হয়েছে ✨','<b>'+esc(title)+'</b> খাতের হিসাবটি নিরাপদে যুক্ত হয়েছে।',amt)}
+ save();const ym2=date.slice(0,7);
+ if(!isNew){closeM();acctMon(ym2);okPop('ব্যয় আপডেট হয়েছে ✨','<b>'+esc(title)+'</b> খাতের হিসাবটি নিরাপদে আপডেট হয়েছে।',amt);return}
+ const mdl=[...document.querySelectorAll('.md')].pop();if(mdl)mdl.remove();acctMon(ym2);
+ if(mdl){document.body.appendChild(mdl);['ex1','ex2','ex4'].forEach(k=>{const el=mdl.querySelector('#'+k);if(el)el.value=''});
+  mdl.querySelectorAll('button').forEach(b=>{const o=b.getAttribute('onclick')||'';if(o.indexOf('closeM();acctMon(')===0)b.setAttribute('onclick',"closeM();acctMon('"+ym2+"')")});
+  const f=mdl.querySelector('#ex1');if(f)setTimeout(()=>f.focus(),50)}
+ okPop('ব্যয় সফলভাবে সংরক্ষিত হয়েছে ✨','<b>'+esc(title)+'</b> খাতের হিসাবটি নিরাপদে যুক্ত হয়েছে।',amt)}
 function okPop(t,sub,amt){const o=document.createElement('div');o.className='okp';o.innerHTML='<div class="okp-c"><div class="okp-i"><svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="40"/><path d="M26 43l11 11 21-23"/></svg></div><h4 class="okp-t">'+t+'</h4>'+(amt?'<div class="okp-a">৳'+bn(amt)+'</div>':'')+'<p class="okp-s">'+sub+'</p><div class="okp-b"><i></i></div></div>';let x=0;const c=()=>{if(x)return;x=1;o.classList.add('out');setTimeout(()=>o.remove(),300)};o.onclick=c;document.body.appendChild(o);setTimeout(c,2500)}
 function expDel(id,ym){const e=EX().find(x=>x.id===id);if(!e)return;ask(e.title+' (৳'+bn(e.amt)+') ব্যয়টি ডিলিট করবেন?',()=>{S.exps=EX().filter(x=>x.id!==id);save();acctMon(ym)})}
 
@@ -1514,4 +1521,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
 addEventListener('pagehide',wr);
 /* নিজে লগআউট দিলে সেশন সাথে সাথে মুছে যাবে */
 const _lo=doLogout;doLogout=function(){off=1;clr();const r=_lo.apply(this,arguments);setTimeout(()=>{off=0},4000);return r};
-})();</script></body></html>
+})();</script><script id="okhook">
+(function(){let n=0,n0=0;const _s=save;save=function(){n++;return _s.apply(this,arguments)};
+const isSv=b=>{const t=b.textContent||'';return t.indexOf('সংরক্ষণ')>-1&&!/প্রিন্ট|PDF|pdf/.test(t)};
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b&&isSv(b))n0=n},true);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b||!isSv(b)||n===n0||document.querySelector('.okp'))return;okPop('সফলভাবে সংরক্ষিত হয়েছে ✨','আপনার তথ্যটি নিরাপদে সিস্টেমে সেভ হয়েছে।')});
+})();
+</script></body></html>
